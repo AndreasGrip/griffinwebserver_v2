@@ -93,12 +93,15 @@ module.exports = class WebServer {
     const webfolder = this.parent.webfolder;
 
     // look for custom handler. 
-    this.parent.handlers.forEach(handler => {
+    // not using forEach as async will cause problems.
+    const handlers = this.parent.handlers;
+    
+    for(let i = 0; i < handlers.length; i++) {
+      const handler = handlers[i];
       if(handler?.pathName && handler.pathName === parsedUrl.pathname.slice(0, handler.pathName.length)) {
-        handler.handler(req,res);
-        return;
+        return handler.handler(req,res);
       }
-    });
+    }
 
     // default handle it as a local file
     let pathName = path.join(webfolder, parsedUrl.pathname);
