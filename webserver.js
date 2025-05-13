@@ -71,6 +71,7 @@ module.exports = class WebServer {
     // if array just use the array, if object, just add the object within a array. default to empty array
     // todo validate handlers
     this.handlers = isArray(handlers) ? handlers : isObject(handlers) ? [handlers] : [];
+    this.middlewares = [];
     this.port = port;
     if (typeof this.port !== 'number') {
       console.log('Warning: port not number ' + this.port + ' using default port 80');
@@ -86,16 +87,39 @@ module.exports = class WebServer {
     this.handlers.push(newHandler);
   }
 
+  addMiddleware(pathName, handler) {
+    const newHandler = {"pathName": pathName, "handler": handler};
+    this.middlewares.push(newHandler);
+  }
+
   webHandler(req, res) {
     // there is no way in nodejs to detect protocol, and honestly, there is almost always a nginx proxy in between so would only mess things upp.
     const baseUrl = 'http://' + req.headers.host + '/';
     const parsedUrl = new URL(req.url, baseUrl);
     const webfolder = this.parent.webfolder;
 
+    // look for middlewares and run them
+    const middlewares = this.parent.middlewares;
+    for(let i = 0; i < middlewares.length; i++) {
+      const middleware = middlewares[i];
+      if(middleware?.pathName && middleware.pathName === parsedUrl.pathname.slice(0, middleware.pathName.length)) {
+        middleware.handler(req,res);
+      }
+    }
+
+
     // look for custom handler. 
     // not using forEach as async will cause problems.
     const handlers = this.parent.handlers;
-    
+
+    for(let i = 0; i < handlers.length; i++) {
+      const handler = handlers[i];
+      if(handler?.pathName && handler.pathName === parsedUrl.pathname.slice(0, handler.pathName.length)) {
+        return handler.handler(req,res);
+      }
+    }
+
+        
     for(let i = 0; i < handlers.length; i++) {
       const handler = handlers[i];
       if(handler?.pathName && handler.pathName === parsedUrl.pathname.slice(0, handler.pathName.length)) {

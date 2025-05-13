@@ -1,4 +1,4 @@
-const Webserver = require('./webserver');
+const Webserver = require('griffinwebserver_v2');
 const webserver = new Webserver('www/', 8080);
 webserver.start();
 
@@ -12,5 +12,4 @@ webserver.addHandler('/api/', apiFunction);
 
 /*
   if you point your browser towards http://127.0.0.1:8080/api/kaka you will be served with a page called kaka
-
-  */
+*/
