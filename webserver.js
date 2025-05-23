@@ -65,13 +65,15 @@ const mimeType = {
 };
 
 module.exports = class WebServer {
-  constructor(webfolder = 'www', port = 80, handlers) {
+  constructor(webfolder = 'www', port = 80, endpoints = [], middlewares = []) {
     this.webfolder = webfolder;
     if (webfolder[0] !== '/') path.join(__dirname, this.webfolder);
     // if array just use the array, if object, just add the object within a array. default to empty array
     // todo validate handlers
-    this.handlers = isArray(handlers) ? handlers : isObject(handlers) ? [handlers] : [];
-    this.middlewares = [];
+    // Middlewares will run before the handlers and endpoints, should normaly not end the request
+    this.middlewares = isArray(middlewares) ? middlewares : isObject(middlewares) ? [middlewares] : [];
+    // Handlers deprecated, but work like endpoints for now
+    this.endpoints = isArray(endpoints) ? endpoints : isObject(endpoints) ? [endpoints] : [];
     this.port = port;
     if (typeof this.port !== 'number') {
       console.log('Warning: port not number ' + this.port + ' using default port 80');
@@ -81,15 +83,19 @@ module.exports = class WebServer {
     }
   }
 
-  // pathName is for instance '/api' handler need to be a function that is a normal webb handler that will receive (req,res)
-  addHandler(pathName, handler) {
-    const newHandler = {"pathName": pathName, "handler": handler};
-    this.handlers.push(newHandler);
-  }
-
   addMiddleware(pathName, handler) {
     const newHandler = {"pathName": pathName, "handler": handler};
     this.middlewares.push(newHandler);
+  }
+
+  addEndpoint(pathName, handler) {
+    const newHandler = {"pathName": pathName, "handler": handler};
+    this.endpoints.push(newHandler);
+  }
+
+  // leagacy method name to add endpoints
+  addHandler(pathName, handler) {
+    this.addEndpoint(pathName, handler);
   }
 
   webHandler(req, res) {
@@ -98,60 +104,69 @@ module.exports = class WebServer {
     const parsedUrl = new URL(req.url, baseUrl);
     const webfolder = this.parent.webfolder;
 
-    // look for middlewares and run them
-    const middlewares = this.parent.middlewares;
-    for(let i = 0; i < middlewares.length; i++) {
-      const middleware = middlewares[i];
-      if(middleware?.pathName && middleware.pathName === parsedUrl.pathname.slice(0, middleware.pathName.length)) {
-        middleware.handler(req,res);
+    // Filter out middleares and endpoints based on the pathName.
+    const middlewaresToRun = this.parent.middlewares.filter(h => h?.pathName && h.pathName === parsedUrl.pathname.slice(0, h.pathName.length));
+    const endpointsToRun = this.parent.endpoints.filter(h => h?.pathName && h.pathName === parsedUrl.pathname.slice(0, h.pathName.length));
+
+    // combine middlewares and endpoints to run into an array (in the correct order)
+    const allHandlersToRun = [...middlewaresToRun, ...endpointsToRun];
+
+    // custom promise generator for this project..
+    function promisify(call) {
+      // if call is a promise, then just return it.
+      if(call instanceof Promise) return call;
+      // if call.handler is a function then run it.
+      if(typeof call.handler === 'function') {
+        const result = call.handler(req,res);
+        // if call.handler generated a promise just return it
+        if(result instanceof Promise) return result;
+        // if call.handler generated anything but a promise, create a promise and resolve it with the result for consistency.
+        return new Promise(resolve => resolve(result));
+      } else { // call is a function.
+        return Promise.resolve(call);
       }
     }
 
-
-    // look for custom handler. 
-    // not using forEach as async will cause problems.
-    const handlers = this.parent.handlers;
-
-    for(let i = 0; i < handlers.length; i++) {
-      const handler = handlers[i];
-      if(handler?.pathName && handler.pathName === parsedUrl.pathname.slice(0, handler.pathName.length)) {
-        return handler.handler(req,res);
-      }
-    }
-
-        
-    for(let i = 0; i < handlers.length; i++) {
-      const handler = handlers[i];
-      if(handler?.pathName && handler.pathName === parsedUrl.pathname.slice(0, handler.pathName.length)) {
-        return handler.handler(req,res);
-      }
-    }
-
-    // default handle it as a local file
-    let pathName = path.join(webfolder, parsedUrl.pathname);
-    fsProm
-      .stat(pathName)
-      .then((stat) => {
-        // if is a directory, then look for index.html
-        if (stat.isDirectory()) {
-          pathName = path.join(pathName, 'index.html');
-        }
-        // read file from file system
-        return fsProm.readFile(pathName);
-      })
-      .then((data) => {
-        // based on the URL path, extract the file extension. e.g. .js, .doc, ...
-        const ext = path.parse(pathName).ext;
-        // if the file is found, set Content-type and send data
-        res.setHeader('Content-type', mimeType[ext] || 'application/octet-stream');
-        res.end(data);
-        console.log('served file ' + pathName);
-      })
-      .catch((err) => {
-        res.statusCode = !err.code || err.code === 'ENOENT' ? 404 : 500;
-        res.end('Error ' + res.statusCode + ': ' + err.message);
-      });
+    function defaultFileHandler(req,res){
+      // default handle it as a local file
+      let pathName = path.join(webfolder, parsedUrl.pathname);
+      fsProm
+        .stat(pathName)
+        .then((stat) => {
+          // if is a directory, then look for index.html
+          if (stat.isDirectory()) {
+            pathName = path.join(pathName, 'index.html');
+          }
+          // read file from file system
+          return fsProm.readFile(pathName);
+        })
+        .then((data) => {
+          // based on the URL path, extract the file extension. e.g. .js, .doc, ...
+          const ext = path.parse(pathName).ext;
+          // if the file is found, set Content-type and send data
+          res.setHeader('Content-type', mimeType[ext] || 'application/octet-stream');
+          res.end(data);
+          console.log('served file ' + pathName);
+        })
+        .catch((err) => {
+          res.statusCode = !err.code || err.code === 'ENOENT' ? 404 : 500;
+          res.end('Error ' + res.statusCode + ': ' + err.message);
+        });
   }
+
+    function requestHandler() {
+      if(allHandlersToRun.length === 0) return promisify({handler: defaultFileHandler});
+      const handlerToRun = allHandlersToRun.shift();
+      const p = promisify(handlerToRun);
+      // make this recurse
+      p.then(() => requestHandler()).catch(e => {
+        // if anything goes wrong I guess it makes sense to show it.
+        console.error(e);
+      });
+    }
+
+    requestHandler();
+}
 
   start() {
     this.WebServer = new http.createServer(this.webHandler);
