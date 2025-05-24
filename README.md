@@ -27,7 +27,7 @@ Here is a more advance example using the session middleware to handle login amon
 
 ```javascript
 const Webserver = require('griffinwebserver_v2');
-const session = require('griffinwebserver_v2-session');
+const session = require('griffinwebserver_v2-middleware-session');
 const webserver = new Webserver('www/', 8080);
 webserver.start();
 
@@ -39,25 +39,6 @@ function isJSON(str) {
     return false;
   }
 }
-
-function httpFormToObject(formData) {
-  // if it's not a string it's not formdata
-  if (typeof formData !== 'string') return formData;
-  // if it's valid json it's not formdata
-  if (!isJSON(formData)) return formData;
-  // if there is no equals sign it's not formdata
-  if(formData.indexOf('=') === -1) return formData;
-
-  
-  const formDataObj = {};
-  const formDataArr = formData.split('&');
-  for (let i = 0; i < formDataArr.length; i++) {
-    const pair = formDataArr[i].split('=');
-    formDataObj[pair[0]] = decodeURIComponent(pair[1]);
-  }
-  return formDataObj;
-}
-
 
 function apiFunction(req, res) {
   const baseUrl = 'http://' + req.headers.host + '/';
@@ -82,7 +63,6 @@ function apiFunction(req, res) {
   function dataDone() {
     // convert posted data to data
     body = Buffer.concat(body).toString(); // convert to string
-    body = httpFormToObject(body); // parse the data in to an object if posted form
     if(isJSON(body)) body = JSON.parse(body); // parse the data if it is json
 
     req.session.data.counter = (req.session.data.counter || 0) + 1; // increment the counter of request made in this session
@@ -97,7 +77,6 @@ function apiFunction(req, res) {
       case 'login':
         if(body.username === 'admin' && body.password === 'password') {
           req.session.data.loggedIn = true;
-        
           responseBody = 'Logged in';
         } else {
           req.session.data.loggedIn = false;
@@ -118,12 +97,10 @@ function apiFunction(req, res) {
           req.statusCode = 404;
           responseBody = 'Invalid API name';
     }
-
     res.end(responseBody);
   }
 }
 
 webserver.addMiddleware('/api/', session);
-
-webserver.addHandler('/api/', apiFunction);
+webserver.addEndpoint('/api/', apiFunction);
 ```
