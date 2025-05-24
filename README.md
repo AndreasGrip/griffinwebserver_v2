@@ -1,11 +1,11 @@
-griffinwebserver_v2 is a extremly lightweight library that is built right on top of nodejs builtin http functionality, no external librarys used. (middleware might use them) and the entire code is 139 lines that contains code and 50 of them are defining mime types,
-Standard behavior is to serve files in a folder, but you can easily create custom behavior for for specific paths, usually the backend.
+# griffinwebserver_v2
 
-It's also possible to create middle ware that will run before the request reach the specific path, this can for instance be used to add support for sessions using griffinwebserver_v2-session 
+This is a extremly lightweight library that is built right on top of nodejs builtin http functionality, no external librarys used for the core product.
+(But common middleware might use them.)
+The code itself is under 200lines of code but seem to become more and more of a replacement for Express that is easier to maintain.
 
-Basically this library is perfect for projects that is mostly backend, but also need to some files served.
-
-An example would be a search page where backend handle reqests to the database, but there need to be some static files for the gui.
+It's very easy to create middlewares that affect the data before it reaches it's endpoint. Take a look at griffinwebserver_v2-middleware-session as a example.
+It's just as easy to create a endpoint (se the example). Both are actually treated the same way, first all pathmatching middlewares, in the order they were added, then the path matching endpoints in the order they were added. If it's not resolved after this it will continue to 'default' that is to serve files in a specific folder, something many know as "static".
 
 Here is a very basic example
 
@@ -97,7 +97,7 @@ function apiFunction(req, res) {
       case 'login':
         if(body.username === 'admin' && body.password === 'password') {
           req.session.data.loggedIn = true;
-          
+        
           responseBody = 'Logged in';
         } else {
           req.session.data.loggedIn = false;
