@@ -84,12 +84,12 @@ module.exports = class WebServer {
   }
 
   addMiddleware(pathName, handler) {
-    const newHandler = {"pathName": pathName, "handler": handler};
+    const newHandler = { pathName: pathName, handler: handler };
     this.middlewares.push(newHandler);
   }
 
   addEndpoint(pathName, handler) {
-    const newHandler = {"pathName": pathName, "handler": handler};
+    const newHandler = { pathName: pathName, handler: handler };
     this.endpoints.push(newHandler);
   }
 
@@ -105,8 +105,8 @@ module.exports = class WebServer {
     const webfolder = this.parent.webfolder;
 
     // Filter out middleares and endpoints based on the pathName.
-    const middlewaresToRun = this.parent.middlewares.filter(h => h?.pathName && h.pathName === parsedUrl.pathname.slice(0, h.pathName.length));
-    const endpointsToRun = this.parent.endpoints.filter(h => h?.pathName && h.pathName === parsedUrl.pathname.slice(0, h.pathName.length));
+    const middlewaresToRun = this.parent.middlewares.filter((h) => h?.pathName && h.pathName === parsedUrl.pathname.slice(0, h.pathName.length));
+    const endpointsToRun = this.parent.endpoints.filter((h) => h?.pathName && h.pathName === parsedUrl.pathname.slice(0, h.pathName.length));
 
     // combine middlewares and endpoints to run into an array (in the correct order)
     const allHandlersToRun = [...middlewaresToRun, ...endpointsToRun];
@@ -114,20 +114,21 @@ module.exports = class WebServer {
     // custom promise generator for this project..
     function promisify(call) {
       // if call is a promise, then just return it.
-      if(call instanceof Promise) return call;
+      if (call instanceof Promise) return call;
       // if call.handler is a function then run it.
-      if(typeof call.handler === 'function') {
-        const result = call.handler(req,res);
+      if (typeof call.handler === 'function') {
+        const result = call.handler(req, res);
         // if call.handler generated a promise just return it
-        if(result instanceof Promise) return result;
+        if (result instanceof Promise) return result;
         // if call.handler generated anything but a promise, create a promise and resolve it with the result for consistency.
-        return new Promise(resolve => resolve(result));
-      } else { // call is a function.
+        return new Promise((resolve) => resolve(result));
+      } else {
+        // call is a function.
         return Promise.resolve(call);
       }
     }
 
-    function defaultFileHandler(req,res){
+    function defaultFileHandler(req, res) {
       // default handle it as a local file
       let pathName = path.join(webfolder, parsedUrl.pathname);
       fsProm
@@ -152,30 +153,30 @@ module.exports = class WebServer {
           res.statusCode = !err.code || err.code === 'ENOENT' ? 404 : 500;
           res.end('Error ' + res.statusCode + ': ' + err.message);
         });
-  }
+    }
 
     function requestHandler() {
-      if(allHandlersToRun.length === 0) return promisify({handler: defaultFileHandler});
+      if (allHandlersToRun.length === 0) return promisify({ handler: defaultFileHandler });
       const handlerToRun = allHandlersToRun.shift();
       const p = promisify(handlerToRun);
       // make this recurse
-      p.then(() => requestHandler()).catch(e => {
+      p.then(() => requestHandler()).catch((e) => {
         // if anything goes wrong I guess it makes sense to show it.
         console.error(e);
       });
     }
 
     requestHandler();
-}
+  }
 
   start() {
     this.WebServer = new http.createServer(this.webHandler);
     this.WebServer.parent = this;
-    console.log('Start webserver on port ' + this.port)
+    console.log('Start webserver on port ' + this.port);
     this.WebServer.listen(this.port);
 
     this.WebServer.on('error', (err) => {
       console.log('Error: ' + err);
     });
   }
-}
+};
