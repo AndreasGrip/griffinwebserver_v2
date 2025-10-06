@@ -139,16 +139,22 @@ module.exports = class WebServer {
           if (stat.isDirectory()) {
             pathName = path.join(pathName, 'index.html');
           }
-          // read file from file system
-          return fsProm.readFile(pathName);
-        })
-        .then((data) => {
+
           // based on the URL path, extract the file extension. e.g. .js, .doc, ...
-          const ext = path.parse(pathName).ext;
+          const ext = path.parse(pathName).ext.toLowerCase();;
           // if the file is found, set Content-type and send data
           res.setHeader('Content-type', mimeType[ext] || 'application/octet-stream');
-          res.end(data);
-          console.log('served file ' + pathName);
+
+          const stream = fs.createReadStream(pathName);
+          stream.pipe(res);
+          stream.on('open', () => {
+            console.log('serve file ' + pathName);
+          });
+
+          stream.on('error', (err) => {
+            res.statusCode = !err.code || err.code === 'ENOENT' ? 404 : 500;
+            res.end('Error ' + res.statusCode + ': ' + err.message);
+          });
         })
         .catch((err) => {
           res.statusCode = !err.code || err.code === 'ENOENT' ? 404 : 500;
