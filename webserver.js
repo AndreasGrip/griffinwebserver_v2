@@ -22,7 +22,7 @@ const mimeType = {
   '.css': 'text/css',
   '.doc': 'application/msword',
   '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  '.eot': 'appliaction/vnd.ms-fontobject',
+  '.eot': 'application/vnd.ms-fontobject',
   '.epub': 'application/epub+zip',
   '.gif': 'image/gif',
   '.gz': 'application/gzip',
