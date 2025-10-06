@@ -2,8 +2,8 @@ const http = require('http');
 const url = require('url');
 const fs = require('fs');
 const fsProm = fs.promises;
-const path = require('path');
 
+// helper functions
 function isObject(a) {
   return !!a && a.constructor === Object;
 }
@@ -15,7 +15,9 @@ function isArray(a) {
 const mimeType = {
   '.7z': 'application/x-7z-compressed',
   '.acc': 'audio/aac',
+  '.arc': 'application/x-freearc',
   '.avi': 'video/x-msvideo',
+  '.bmp': 'image/bmp',
   '.bz': 'application/x-bzip',
   '.bz2': 'application/x-bzip2',
   '.csv': 'text/csv',
@@ -29,28 +31,41 @@ const mimeType = {
   '.htm': 'text/html',
   '.html': 'text/html',
   '.ico': 'image/x-icon',
+  '.ics': 'text/calendar',
+  '.jar': 'application/java-archive',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.js': 'text/javascript',
   '.json': 'application/json',
+  '.md': 'text/markdown',
+  '.mid': 'audio/midi',
+  '.midi': 'audio/x-midi',
   '.mjs': 'text/javascript',
   '.mp3': 'audio/mpeg',
   '.mp4': 'video/mp4',
   '.mpeg': 'video/mpeg',
+  '.mpg': 'video/mpeg',
+  '.odp': 'application/vnd.oasis.opendocument.presentation',
   '.odt': 'application/vnd.oasis.opendocument.text',
   '.ods': 'application/vnd.oasis.opendocument.spreadsheet',
   '.ogg': 'audio/ogg',
+  '.oga': 'audio/ogg',
   '.ogv': 'video/ogg',
+  '.opus': 'audio/ogg',
+  '.otf': 'font/otf',
   '.pdf': 'application/pdf',
   '.png': 'image/png',
   '.ppt': 'application/vnd.ms-powerpoint',
   '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   '.rar': 'application/x-rar-compressed',
+  '.rtf': 'application/rtf',
   '.sh': 'application/x-sh',
   '.svg': 'image/svg+xml',
   '.tar': 'application/x-tar',
+  '.tif': 'image/tiff',
+  '.tiff': 'image/tiff',
   '.tgz': 'application/x-compressed',
-  '.ttf': 'application/font-sfnt',
+  '.ttf': 'font/ttf',
   '.txt': 'text/plain',
   '.wav': 'audio/wav',
   '.weba': 'audio/webm',
@@ -61,6 +76,7 @@ const mimeType = {
   '.xls': 'application/vnd.ms-excel',
   '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   '.xml': 'text/xml',
+  '.xul': 'application/vnd.mozilla.xul+xml',
   '.zip': 'application/zip',
 };
 
