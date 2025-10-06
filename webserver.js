@@ -67,7 +67,8 @@ const mimeType = {
 module.exports = class WebServer {
   constructor(webfolder = 'www', port = 80, endpoints = [], middlewares = []) {
     this.webfolder = webfolder;
-    if (webfolder[0] !== '/') path.join(__dirname, this.webfolder);
+    // if webfolder is a absolute path, use that path, otherwise use relative path from the folder were the program is installed.
+    if (webfolder[0] !== '/') this.webfolder = path.join(__dirname, this.webfolder);
     // if array just use the array, if object, just add the object within a array. default to empty array
     // todo validate handlers
     // Middlewares will run before the handlers and endpoints, should normaly not end the request
