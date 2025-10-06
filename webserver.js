@@ -171,7 +171,7 @@ module.exports = class WebServer {
   }
 
   start() {
-    this.WebServer = new http.createServer(this.webHandler);
+    this.WebServer = http.createServer(this.webHandler);
     this.WebServer.parent = this;
     console.log('Start webserver on port ' + this.port);
     this.WebServer.listen(this.port);
