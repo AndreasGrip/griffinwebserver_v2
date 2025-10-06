@@ -1,6 +1,7 @@
-const http = require('http');
-const url = require('url');
-const fs = require('fs');
+const http = require('node:http');
+const url = require('node:url');
+const fs = require('node:fs');
+const path = require('node:path');
 const fsProm = fs.promises;
 
 // helper functions
