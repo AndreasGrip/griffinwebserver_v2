@@ -161,9 +161,15 @@ module.exports = class WebServer {
       const handlerToRun = allHandlersToRun.shift();
       const p = promisify(handlerToRun);
       // make this recurse
-      p.then(() => requestHandler()).catch((e) => {
+      p.then(() => {
+        // writableEnded should really not happen. But it make some sense to not continue to loop if it have.
+        if (!res.writableEnded) requestHandler()
+      })
+      .catch((e) => {
         // if anything goes wrong I guess it makes sense to show it.
         console.error(e);
+        res.statusCode = 500;
+        res.end('Internal Server Error');
       });
     }
 
