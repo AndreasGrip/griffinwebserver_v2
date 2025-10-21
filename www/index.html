@@ -10,6 +10,18 @@
     <p>For instance a searchengine where you need a webpage that pull data from the backend.</p>
     <br>
     <p>It don't contain bells and whistles, it's just quick and only uses vanilla nodejs so no need to install external libraries.</p>
-    <p>Also note that its currently just 139 lines of code, of them 50 are defining mime types, and 10 lines of comments, it's very lightweight in every sense of the word.</p>
+    <p>Also note that its currently just 223 lines of code, of them 64 are defining mime types, and 10 lines of comments, it's very lightweight in every sense of the word.</p>
+    <br>
+    <p>This is a example file, you most likely have <pre>
+      
+const Webserver = require('griffinwebserver_v2');
+const webserver = new Webserver('www/', 8080);</pre>
+
+rather than
+<pre>
+const Webserver = require('griffinwebserver_v2');
+const webserver = new Webserver(path.join(__dirname, 'www/'), 8080);
+</pre></p>
+  <p>And thereby using the folder of the npm package + www</p>
   </body>
 </html>

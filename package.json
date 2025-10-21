@@ -1,6 +1,6 @@
 {
   "name": "griffinwebserver_v2",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Basic webserver library to serve files in a folder. But can also have specific paths like /api/ that is handled by custom function and supports middleware.",
   "main": "webserver.js",
   "scripts": {

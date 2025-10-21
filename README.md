@@ -7,11 +7,11 @@ The code itself is under 200lines of code but seem to become more and more of a 
 It's very easy to create middlewares that affect the data before it reaches it's endpoint. Take a look at griffinwebserver_v2-middleware-session as a example.
 It's just as easy to create a endpoint (se the example). Both are actually treated the same way, first all pathmatching middlewares, in the order they were added, then the path matching endpoints in the order they were added. If it's not resolved after this it will continue to 'default' that is to serve files in a specific folder, something many know as "static".
 
-Here is a very basic example
+Here is a very basic example serving a default file folder www/, a api endpoint /api/, and another folder for static files static/
 
 ```javascript
 const Webserver = require('griffinwebserver_v2');
-const webserver = new Webserver('www/', 8080);
+const webserver = new Webserver(path.join(__dirname, 'www/'), 8080);
 webserver.start();
 
 function apiFunction(req, res) {
@@ -20,7 +20,10 @@ function apiFunction(req, res) {
   res.end(parsedUrl.pathname.split('/')[2]);
 }
 
-webserver.addHandler('/api/', apiFunction);`
+webserver.addHandler('/api/', apiFunction);
+
+webserver.addHandler('/stat/',webserver.static('static/'))
+
 ```
 
 Here is a more advance example using the session middleware to handle login among other things.
@@ -28,7 +31,7 @@ Here is a more advance example using the session middleware to handle login amon
 ```javascript
 const Webserver = require('griffinwebserver_v2');
 const session = require('griffinwebserver_v2-middleware-session');
-const webserver = new Webserver('www/', 8080);
+const webserver = new Webserver(path.join(__dirname, 'www/'), 8080);
 webserver.start();
 
 function isJSON(str) {
