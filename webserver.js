@@ -113,7 +113,7 @@ module.exports = class WebServer {
     this.endpoints.push(newHandler);
   }
 
-  // leagacy method name to add endpoints
+  // legacy method name to add endpoints
   addHandler(pathName, handler) {
     this.addEndpoint(pathName, handler);
   }
@@ -134,11 +134,15 @@ module.exports = class WebServer {
           // if is a directory, then look for index.html
           if (stat.isDirectory()) {
             filePath = path.join(filePath, 'index.html');
+            return fsProm.stat(filePath);
           }
-
+          return stat;
+        })
+        .then((stat) => {
           // based on the URL path, extract the file extension. e.g. .js, .doc, ...
           const ext = path.parse(filePath).ext.toLowerCase();
           // if the file is found, set Content-type and send data
+          res.setHeader('Content-Length', stat.size);
           res.setHeader('Content-type', mimeType[ext] || 'application/octet-stream');
           res.streaming = true;
           const stream = fs.createReadStream(filePath);
@@ -158,11 +162,11 @@ module.exports = class WebServer {
         })
         .catch((err) => {
           res.statusCode = !err.code || err.code === 'ENOENT' ? 404 : 500;
-            if (process.env.NODE_ENV === 'development') {
-              res.end('Error ' + res.statusCode + ': ' + err.message);
-            } else {
-              res.end('Error ' + res.statusCode);
-            }
+          if (process.env.NODE_ENV === 'development') {
+            res.end('Error ' + res.statusCode + ': ' + err.message);
+          } else {
+            res.end('Error ' + res.statusCode);
+          }
         });
     };
   }
