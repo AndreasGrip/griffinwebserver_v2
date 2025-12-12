@@ -118,16 +118,17 @@ module.exports = class WebServer {
     this.addEndpoint(pathName, handler);
   }
 
-  // TODO, figure out how to remove the
+  // method to create a endpoint that that serves files from a folder (staticPath)
 
   static(staticPath) {
-    //endpoint
-    let folderPath = staticPath;
-    // if webfolder is a absolute path, use that path, otherwise use relative path from the folder were the program is installed.
-    if (folderPath[0] !== '/') folderPath = path.join(__dirname, folderPath);
+    
+    // if staticPath is a absolute path, use that path, otherwise use relative path from the folder were the program is installed.
+    if (staticPath[0] !== '/') staticPath = path.join(__dirname, staticPath);
 
     return function (req, res) {
-      let filePath = path.join(folderPath, req.urlPart);
+      // get rid of the "search" part of the url aka. parameters  /test/a?a=2&b=3 -> /test/a
+      req.urlPart = new URL('http://1/' + req.urlPart).pathname
+      let filePath = path.join(staticPath, req.urlPart);
       return fsProm
         .stat(filePath)
         .then((stat) => {
