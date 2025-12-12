@@ -13,6 +13,7 @@ function isArray(a) {
   return !!a && a.constructor === Array;
 }
 
+// common mimetypes.
 const mimeType = {
   '.7z': 'application/x-7z-compressed',
   '.acc': 'audio/aac',
@@ -83,7 +84,9 @@ const mimeType = {
 
 module.exports = class WebServer {
   constructor(webfolder = 'www', port = 80, endpoints = [], middlewares = []) {
+    // save the default file folder
     this.webfolder = webfolder;
+    // save port and make sure it's a number, otherwise default to 80
     this.port = port;
     if (typeof this.port !== 'number') {
       console.log('Warning: port [' + this.port + '] not number using default port 80');
@@ -93,10 +96,12 @@ module.exports = class WebServer {
     };
     // if array just use the array, if object, just add the object within a array. default to empty array
     // todo validate handlers
-    // Middlewares will run before the handlers and endpoints, should normaly not end the request
+    // Middlewares will run before the handlers and endpoints, should normally not end the request (but can do)
     this.middlewares = isArray(middlewares) ? middlewares : isObject(middlewares) ? [middlewares] : [];
-    // Handlers deprecated, but work like endpoints for now
+    // Endpoint normally end the request.
     this.endpoints = isArray(endpoints) ? endpoints : isObject(endpoints) ? [endpoints] : [];
+
+    // Add the webfolder as the default endpoint if nothing else have ended the request.
     const webfolderEndpoint = this.static(this.webfolder);
     this.endpoints.push({ pathName: '/', handler: webfolderEndpoint });
   }
@@ -202,6 +207,7 @@ module.exports = class WebServer {
     }
 
     function requestHandler() {
+      // if there is no handlers left to run, return 404 
       if (allHandlersToRun.length === 0)
         return promisify({
           handler: (req, res) => {
@@ -209,8 +215,12 @@ module.exports = class WebServer {
             res.end('404 - Not found');
           },
         });
+      
+      // get the next handler in the stack to run
       const handlerToRun = allHandlersToRun.shift();
+      // get rid of the routing part of the URL 
       req.urlPart = path.join('/', req.url.slice(handlerToRun.pathName.length));
+
       const p = promisify(handlerToRun);
       // make this recurse
       p.then(() => {
