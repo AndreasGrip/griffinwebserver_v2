@@ -2,7 +2,8 @@
 
 This is a extremly lightweight library that is built right on top of nodejs builtin http functionality, no external librarys used for the core product.
 (But common middleware might use them.)
-The code itself is under 200lines of code but seem to become more and more of a replacement for Express that is easier to maintain.
+The code itself is just 250 lines of code, of them 68 are defining mime types, and 54 lines of comments or empty lines.
+Slowly it become more and more of a replacement for Express that is easier to maintain.
 
 It's very easy to create middlewares that affect the data before it reaches it's endpoint. Take a look at griffinwebserver_v2-middleware-session as a example.
 It's just as easy to create a endpoint (se the example). Both are actually treated the same way, first all pathmatching middlewares, in the order they were added, then the path matching endpoints in the order they were added. If it's not resolved after this it will continue to 'default' that is to serve files in a specific folder, something many know as "static".
