@@ -84,6 +84,13 @@ const mimeType = {
 module.exports = class WebServer {
   constructor(webfolder = 'www', port = 80, endpoints = [], middlewares = []) {
     this.webfolder = webfolder;
+    this.port = port;
+    if (typeof this.port !== 'number') {
+      console.log('Warning: port [' + this.port + '] not number using default port 80');
+      this.port = 80;
+    } else {
+      this.port = Math.floor(this.port);
+    };
     // if array just use the array, if object, just add the object within a array. default to empty array
     // todo validate handlers
     // Middlewares will run before the handlers and endpoints, should normaly not end the request
@@ -92,13 +99,6 @@ module.exports = class WebServer {
     this.endpoints = isArray(endpoints) ? endpoints : isObject(endpoints) ? [endpoints] : [];
     const webfolderEndpoint = this.static(this.webfolder);
     this.endpoints.push({ pathName: '/', handler: webfolderEndpoint });
-    this.port = port;
-    if (typeof this.port !== 'number') {
-      console.log('Warning: port not number ' + this.port + ' using default port 80');
-      this.port = 80;
-    } else {
-      this.port = Math.floor(this.port);
-    }
   }
 
   addMiddleware(pathName, handler) {
