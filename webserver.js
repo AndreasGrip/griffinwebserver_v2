@@ -184,7 +184,7 @@ module.exports = class WebServer {
 
     // Filter out middleares and endpoints based on the pathName. Sort them to run the most accurate one first (longest match) first.
     const middlewaresToRun = this.parent.middlewares.filter((h) => h?.pathName && h.pathName === parsedUrl.pathname.slice(0, h.pathName.length));
-    const endpointsToRun = this.parent.endpoints.filter((h) => h?.pathName && h.pathName === parsedUrl.pathname.slice(0, h.pathName.length));
+    const endpointsToRun = this.parent.endpoints.filter((h) => h?.pathName && h.pathName === parsedUrl.pathname.slice(0, h.pathName.length)).sort((a, b) => b.pathName.length - a.pathName.length);
 
     // combine middlewares and endpoints to run into an array (in the correct order)
     const allHandlersToRun = [...middlewaresToRun, ...endpointsToRun];
